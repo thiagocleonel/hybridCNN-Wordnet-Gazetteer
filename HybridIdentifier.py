@@ -1,7 +1,7 @@
-CAFFE_ROOT = '/home/thiago/caffe/'
+CAFFE_ROOT = '/home/thiago/caffezao/'
 #IMAGE_PATH = '/home/thiago/Downloads/21273001_878718632279943_1207216092928458353_o.jpg'
-IMAGES_DIR = '/home/thiago/images_ia/toAnalyze/' 
-CSV_LABELS_PATH = CAFFE_ROOT + 'models/hybrid_cnn/categoryIndex_hybridCNN.csv' 
+IMAGES_DIR = '/home/thiago/images_ia/toAnalyze/'
+CSV_LABELS_PATH = CAFFE_ROOT + 'models/hybrid_cnn/categoryIndex_hybridCNN.csv'
 OUTPUT_FILE = '/home/thiago/tcc-output.txt'
 SYNSET_WORDS_PATH = '/home/thiago/caffe/data/ilsvrc12/synset_words.txt'
 
@@ -13,18 +13,18 @@ import webbrowser
 import os
 from PIL import Image
 from PIL import ImageFont
-from PIL import ImageDraw 
+from PIL import ImageDraw
 
 def configureTools():
-   
+
     plt.rcParams['figure.figsize'] = (10,10)
     plt.rcParams['image.interpolation'] = 'nearest'
     plt.rcParams['image.cmap'] = 'gray'
 
 def importCaffe():
-   
+
     sys.path.insert(0, CAFFE_ROOT+'python')
-    
+
 
 #Setup Caffe and instantiates net
 def setupCaffe():
@@ -55,8 +55,8 @@ def createTransformer(net, mean):
 def transform_images(transformer):
     result_hash = {}
     for filename in os.listdir(IMAGES_DIR):
-        image = caffe.io.load_image(os.path.join(IMAGES_DIR+filename)) 
-        transformed_image = transformer.preprocess('data',image)  
+        image = caffe.io.load_image(os.path.join(IMAGES_DIR+filename))
+        transformed_image = transformer.preprocess('data',image)
         result_hash[IMAGES_DIR+filename] = transformed_image
     return result_hash
 
@@ -65,7 +65,7 @@ def predictClass(net, transformed_image):
     net.blobs['data'].reshape(50,        # batch size
                           3,         # 3-channel (BGR) images
                           227, 227)  # image size is 227x227
-    net.blobs['data'].data = transformed_image
+    net.blobs['data'].data[...] = transformed_image
 
     output = net.forward()
     output_prob = output['prob'][0] # the output probability vector for the first image in the batch
@@ -82,7 +82,7 @@ def outputClassLabel(output_prob):
     #labels[output_prob.argmax()]
 
 def openGoogleAndSearch(term):
-    url = "https://www.google.com/search?q={}".format(term)    
+    url = "https://www.google.com/search?q={}".format(term)
     webbrowser.open(url)
 
 def stamp(label, image_path, y):
@@ -100,9 +100,9 @@ def findSynsetWord(word):
         line = synsetWordsFile.readline()
         if not line: break
         if word in line: return line
-    return 'synset word not found'    
-    
-    
+    return 'synset word not found'
+
+
 
 
 if __name__ == '__main__':
@@ -113,7 +113,6 @@ if __name__ == '__main__':
     mean = loadAndConfigureMean()
     transformer = createTransformer(net, mean)
     transformed_images = transform_images(transformer)
-    output_prob=predictClass(net,transformed_images)
     for image_path, image in transformed_images.iteritems():
         output_file = open(OUTPUT_FILE , 'a')
         #Magic happens at next line =)
@@ -133,8 +132,8 @@ if __name__ == '__main__':
                 stamp_text = str(probability) + " " + str((findSynsetWord(word_code)).split()[1])
             stamp(stamp_text,image_path,i)
 
-        
+
 
     #openGoogleAndSearch(label)
-    
-    
+
+

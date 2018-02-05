@@ -1,13 +1,13 @@
 from nltk.corpus import wordnet as wn
 
-min_acceptable_relatedness = 80.0
+min_acceptable_relatedness = 70.0
 
 
 def fast_nouns_similarity(word1,word2):
     synset1 = wn.synset(word1+".n.01")
     synset2 = wn.synset(word2+".n.01")
     return synset1.wup_similarity(synset2)
-    
+
 
 def nouns_similarity(word1,word2):
     result = float(0)
@@ -15,7 +15,7 @@ def nouns_similarity(word1,word2):
     synsets_word2 = wn.synsets(word2, pos=wn.NOUN)
     for synset1 in synsets_word1:
         #if not (str(synset1.name()).startswith(word1)):
-          #  continue
+          #  continuwne
         for synset2 in synsets_word2:
             #if not (str(synset2.name()).startswith(word2)):
             #    continue
@@ -31,6 +31,6 @@ def is_nouns_related(word1,word2):
         return True
     return False
 
-    
+
 
 
