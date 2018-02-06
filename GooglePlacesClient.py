@@ -3,7 +3,8 @@ import jsonpickle
 API_KEY = "AIzaSyD4r0qGg8gCnKMmGPlgkdWd6MOTwWGDLaw"
 GOOGLE_GEOCODING_BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?key="+API_KEY
 
-def nearby_search(lat,lng,radius):
+#radius = diameter in meters  
+def nearbySearch(lat,lng,radius):
     url = GOOGLE_GEOCODING_BASE_URL+"&location="+str(lat)+","+str(lng)+"&radius="+str(radius)
     try:
         request = Request(url)
@@ -16,9 +17,17 @@ def nearby_search(lat,lng,radius):
         print("Request failed")
         return {}
 
-def is_place_an_establishment(place):
-    if "establishment" in place["types"]:
+def isPlaceAnEstablishment(place_types):
+    if "establishment" in place_types:
         return True
     return False
 
-print(nearby_search(-7.233453,-39.409775 , 5)[1]["types"])
+def listCategories(lat,lon,radius,nCategory): #Gets the top-nCategory from each of the nearby places inside the given radius in Km
+    return_hash = {}
+    response_array = nearbySearch(lat,lon,radius)
+    for place_hash in response_array:
+        encoded_types = [place_type.encode('UTF-8') for place_type in place_hash['types']]
+        if(isPlaceAnEstablishment(encoded_types)):
+            return_hash[place_hash['name'].encode('UTF-8')] = encoded_types
+    return return_hash      
+

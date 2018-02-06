@@ -1,6 +1,6 @@
 CAFFE_ROOT = '/home/thiago/caffezao/'
 #IMAGE_PATH = '/home/thiago/Downloads/21273001_878718632279943_1207216092928458353_o.jpg'
-IMAGES_DIR = '/home/thiago/images_ia/toAnalyze/'
+DEFAULT_IMAGE_DIR = '/home/thiago/images_ia/toAnalyze/'
 CSV_LABELS_PATH = CAFFE_ROOT + 'models/hybrid_cnn/categoryIndex_hybridCNN.csv'
 OUTPUT_FILE = '/home/thiago/tcc-output.txt'
 SYNSET_WORDS_PATH = '/home/thiago/caffe/data/ilsvrc12/synset_words.txt'
@@ -52,12 +52,12 @@ def createTransformer(net, mean):
     transformer.set_channel_swap('data',(2,1,0))
     return transformer
 
-def transform_images(transformer):
+def transform_images(transformer, path=DEFAULT_IMAGE_DIR):
     result_hash = {}
-    for filename in os.listdir(IMAGES_DIR):
-        image = caffe.io.load_image(os.path.join(IMAGES_DIR+filename))
-        transformed_image = transformer.preprocess('data',image)
-        result_hash[IMAGES_DIR+filename] = transformed_image
+    for filename in os.listdir(path):
+        image = caffe.io.load_image(os.path.join(path+filename)) 
+        transformed_image = transformer.preprocess('data',image)  
+        result_hash[path+filename] = transformed_image
     return result_hash
 
 def predictClass(net, transformed_image):
@@ -72,10 +72,10 @@ def predictClass(net, transformed_image):
     #print 'predicted class is:', output_prob.argmax()
     return output_prob
 
-def outputClassLabel(output_prob):
+def outputClassLabel(output_prob, nCategory):
     labels = np.loadtxt(CSV_LABELS_PATH, str, delimiter='\t')
     #print 'output label:', labels[output_prob.argmax()]
-    top_inds = output_prob.argsort()[::-1][:5]  # reverse sort and take five largest items
+    top_inds = output_prob.argsort()[::-1][:nCategory]  # reverse sort and take five largest items
     #print 'probabilities and labels:'
     #print zip(output_prob[top_inds], labels[top_inds])
     return zip(output_prob[top_inds], labels[top_inds])
@@ -100,9 +100,41 @@ def findSynsetWord(word):
         line = synsetWordsFile.readline()
         if not line: break
         if word in line: return line
-    return 'synset word not found'
+    return -1
 
+def prettyValuePlacesCNN(synset_line):
+    return synset_line.split('/')[-1].replace("_"," ")
 
+def execute(path=DEFAULT_IMAGE_DIR, nCategory=5):
+    configureTools()                                                                
+    importCaffe()                                                                   
+    setupCaffe()                                                                    
+    net = getNet()                                                                  
+    mean = loadAndConfigureMean()                                                   
+    transformer = createTransformer(net, mean)                                      
+    transformed_images = transform_images(transformer,path)                              
+    return_hash = {}                                
+    for image_path, image in transformed_images.iteritems():
+        return_array = []                                                          
+        #Magic happens at next line =)                                              
+        output_prob=predictClass(net,image)                                         
+        labels = outputClassLabel(output_prob,nCategory)                                          
+        for i in range(0,len(labels)):                                              
+            probability = labels[i][0]                                              
+            word_code = labels[i][1].split()[0]                                    
+            if "/" in word_code:                                                    
+                #Places CNN codes are self-described, so they don't need any handling                                                                              
+                category = prettyValuePlacesCNN(word_code)                     
+            else:                                                                   
+                #ImageNet codes need some search on the synset_words.txt file to find the name of the class
+                found = findSynsetWord(word_code)
+                if(found==-1):
+                    continue
+                else:
+                    category = found.split()[1]                                                                                                                    
+            return_array.append(category)                                          
+        return_hash[image_path] = return_array                                                                            
+    return return_hash
 
 
 if __name__ == '__main__':
@@ -112,7 +144,7 @@ if __name__ == '__main__':
     net = getNet()
     mean = loadAndConfigureMean()
     transformer = createTransformer(net, mean)
-    transformed_images = transform_images(transformer)
+    transformed_images = transform_images(transformer,path)
     for image_path, image in transformed_images.iteritems():
         output_file = open(OUTPUT_FILE , 'a')
         #Magic happens at next line =)
