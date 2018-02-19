@@ -22,7 +22,8 @@ def isPlaceAnEstablishment(place_types):
         return True
     return False
 
-def listCategories(lat,lon,radius,nCategory): #Gets the top-nCategory from each of the nearby places inside the given radius in Km
+def listCategories(lat,lon,radius,nCategory): 
+    #Gets the top-nCategory from each of the nearby places inside the given radius in Km
     return_hash = {}
     response_array = nearbySearch(lat,lon,radius)
     for place_hash in response_array:
